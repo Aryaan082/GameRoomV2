@@ -29,6 +29,7 @@ function Nav() {
                 setConnectDisplay('inline');
                 setInfoDisplay('none');
                 clearInterval(update);
+                setLoading(false);
             } else {
                 updateVariables();
             }
@@ -45,6 +46,7 @@ function Nav() {
     }
     
     async function loadWallet() {
+        setLoading(true);
         await loadWeb3();
         await getAddress();
     }
@@ -57,7 +59,6 @@ function Nav() {
                 await window.ethereum.enable();
             } catch (error) {
                 // User denied account access...
-                setLoading(false);
                 return error;
             }
             setConnectDisplay('none');
