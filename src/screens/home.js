@@ -112,7 +112,7 @@ function Panel2UserInfo() {
                 display: 'flex',
                 justifyContent: 'center'
               }}>
-                  <Button style={{borderRadius: '50px'}} variant='light'>Learn more</Button>
+                  <Button style={{borderRadius: '50px'}} variant='light' target='_blank' href='https://aryaan.medium.com/bitgames-1-roadmap-f447d2b6993'>Learn more</Button>
                 </div>
             </Container>
           </Jumbotron>
@@ -220,9 +220,12 @@ function Footer() {
             <HomeLogo width='50' height='50' />
           </a>
           <span style={{float: 'right'}}>
-            <SocialIcon network='medium' bgColor='white' fgColor='black'></SocialIcon>
-            <SocialIcon network='email' bgColor='white' fgColor='black'></SocialIcon>
-            <SocialIcon network='github' bgColor='white' fgColor='black'></SocialIcon>
+            <a href='https://aryaan.medium.com/bitgames-1-roadmap-f447d2b6993' target='_blank'>
+              <SocialIcon network='medium' bgColor='white' fgColor='black'></SocialIcon>
+            </a>
+            <a href='https://github.com/Aryaan962/GameRoomV2' target='_blank'>
+              <SocialIcon network='github' bgColor='white' fgColor='black' target='_blank' ></SocialIcon>
+            </a> 
           </span>
           
         </div>
