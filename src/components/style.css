@@ -1,16 +1,37 @@
 playing-card {
-    --card-size: 30px;
-    background: linear-gradient(#e66465, #9198e5);
-    /* position: absolute;
-    left: 50%;
-    top: 10px;
-    transform: translate(-50%); */
+    --card-size: 2rem;
 }
 
-.banner {
-    width: 400px;
+.points {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: white;
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    margin-left: 10px;
+    margin-top: -5px;
+    transform: translateY(1%);
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 #ffffff;
+	}
+
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 10px #184587;
+	}
+
+	100% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 #184587;
+	}
+}
+
+body {
+    width: 100vw;
 }

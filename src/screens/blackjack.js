@@ -1,13 +1,15 @@
 import * as React from 'react';
 import * as Web3 from 'web3';
-import {Navbar, Button, Form, Col, InputGroup, FormControl} from 'react-bootstrap';
+import {Navbar, Button, Form, Col, InputGroup, FormControl, Modal, Tabs, Tab} from 'react-bootstrap';
 import {Link} from 'react-router-dom';
-import {SocialIcon} from 'react-social-icons';
+import { ToastContainer, toast } from 'react-toastify';
 // import {createUser, getBalance, getExistance, depositBalance, withdrawBalance, win, loss, balance} from '../components/connect-smart-contracts';
-import {RenderCards, newGame, hit, stand, WinnerMessage} from '../components/blackjack/blackjack-engine';
-import {EthLogo} from '../components/eth-app-logo';
+import {RenderCards, newGame, hit, stand, winnerMessage} from '../components/blackjack/blackjack-engine';
+import ethLogo from '../components/eth-app-logo.png';
 import ethIcon from '../components/eth.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-toastify/dist/ReactToastify.css';
+import '../components/style.css';
 
 function Nav() {
     const [balance, setBalance] = React.useState(0);
@@ -16,6 +18,10 @@ function Nav() {
     const [isLoading, setLoading] = React.useState(false);
     const [connectDisplay, setConnectDisplay] = React.useState('inline');
     const [infoDisplay, setInfoDisplay] = React.useState('none');
+    const [depositDisplay, setDepositDisplay] = React.useState(false);
+
+    const handleClose = () => setDepositDisplay(false);
+    const handleShow = () => setDepositDisplay(true);
     
     var address = '';
     window.web3 = new Web3(window.ethereum);
@@ -78,9 +84,9 @@ function Nav() {
 
     return (
         <div>
-            <Navbar expand='true' bg="white" variant="light">
+            <Navbar style={{backgroundColor: '#002c6b', width: '100%'}} expand='true' variant="dark">
                 <Navbar.Brand href='.'>
-                    <EthLogo width="40" height="40" /> 
+                    <img style={{width: '40px'}} src={ethLogo} alt='Logo'></img>
                     &nbsp;
                     <h1 style={{
                         fontSize: '25px',
@@ -100,10 +106,11 @@ function Nav() {
                     <div style={{
                         display: infoDisplay,
                         zIndex: '1',
-                        backgroundColor: '#e9ecef',
-                        borderRadius: '3px',
+                        backgroundColor: '#082857',
+                        borderRadius: '5px',
                         padding: '10px 8px',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        color: '#ffffff'
                     }}>
                         <img src={ethIcon} alt='Eth:' width='25px' height='25px' />
                         &nbsp;
@@ -113,16 +120,38 @@ function Nav() {
                         display: infoDisplay,
                         marginTop: '-4px',
                         padding: '7px 12px'
-                    }} variant='success'>
+                    }} variant='success' onClick={handleShow}>
                         Deposit
                     </Button>
                 </div>
                 <div>
                     <Button style={{display: connectDisplay}} variant="primary" onClick={loadWallet} disabled={isLoading}>{isLoading ? 'Loading...' : 'Connect Wallet'}</Button>
-                    <div style={{display: infoDisplay}}>{account ? 'Logged In: ' + account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41) : null}</div>
+                    <div style={{color: '#ffffff', display: infoDisplay, fontSize: '18px'}}>{account ? 'Logged In: ' + account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41) : null}</div>
                 </div>
-                
             </Navbar>
+            <Modal show={depositDisplay} onHide={handleClose} size='md' centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Deposit</Modal.Title>
+                </Modal.Header>
+                    {/* <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body> */}
+                    <Tabs style={{paddingTop: '10px', paddingLeft: '10px'}} defaultActiveKey="deposit" transition={false}>
+                        <Tab eventKey="deposit" title="Deposit">
+                            <Modal.Body>
+                                <p>Thank you for choosing this feature! At the moment OpenGames is still developing this feature but check back soon to deposit and play blackjack!</p>
+                            </Modal.Body>
+                        </Tab>
+                        <Tab eventKey="withdraw" title="Withdraw">
+                            <Modal.Body>
+                                <p>Thank you for choosing this feature! At the moment OpenGames is still developing this feature but check back soon to deposit and play blackjack!</p>
+                            </Modal.Body>
+                        </Tab>
+                    </Tabs>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleClose}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }
@@ -130,11 +159,11 @@ function Nav() {
 function BlackjackTable() {
     const [buttonDisabled, setButtonDisabled] = React.useState(true);
     const [standStatus, setStandStatus] = React.useState(false);
-    const [displayWinner, setDisplayWinner] = React.useState('none');
     const [state, setState] = React.useState();
 
+    
+
     function startGame() {
-        setDisplayWinner('none');
         setButtonDisabled(false);
         setStandStatus(false);
         newGame();
@@ -157,109 +186,78 @@ function BlackjackTable() {
     }
     
     function endGame() {
-        setDisplayWinner('inline');
         setButtonDisabled(true);
+        if (winnerMessage() === 'You Won!') {
+            toast.success(winnerMessage(), {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: true,
+            });
+        } else if (winnerMessage() === 'You Lost.') {
+            toast.error(winnerMessage(), {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: true,
+            });
+        } else {
+            toast.dark(winnerMessage(), {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: true,
+            });
+        }
+        
     }
 
     return (
         <div>
-            <div style={{
-                width: '970px',
-                height: '470px',
-                backgroundColor: '#207833',
-                borderRadius: '50%',
-                border: '35px solid #7d4309',
+            <RenderCards stand={standStatus} />
+            <Form style={{
                 position: 'absolute',
-                top: '50%',
                 left: '50%',
-                transform: 'translate(-50%, -50%)'
-            }} id='table'>
-                <div style={{
-                    width: '25px',
-                    height: '25px',
-                    backgroundColor: '#ffffff',
-                    borderRadius: '50%',
-                    border: '1px solid #000000',
-                    position: 'absolute',
-                    top: '-6.5%',
-                    left: '40%',
-                    padding: '1px 7px',
-                    fontSize: '15px'
-                }}>
-                    D
-                </div>
-                <RenderCards stand={standStatus} />
-            </div>
-            <div>
-                <Form style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: '50%',
-                    transform: 'translate(-43%, -150%)'
-                }}>
-                    <Form.Row>
-                        <Col md='auto'>
-                            <Button variant='dark' disabled={buttonDisabled} onClick={gameHit}>Hit</Button>
-                        </Col>
-                        <Col md='auto'>
-                            <Button variant='dark' disabled={buttonDisabled} onClick={gameStand}>Stand</Button>
-                        </Col>
-                        <Col md={7}>
-                            <InputGroup>
-                                <InputGroup.Prepend>
-                                    <InputGroup.Text>$</InputGroup.Text>
-                                </InputGroup.Prepend>
-                                <FormControl id="betSize" placeholder="Bet" />
-                                <InputGroup.Append>
-                                    <Button variant="primary" onClick={startGame} disabled={!buttonDisabled}>Start Game</Button>
-                                </InputGroup.Append>
-                            </InputGroup>
-                        </Col>
-                    </Form.Row>
-                </Form>
-            </div>
-            <div>
-                <WinnerMessage display={displayWinner} />
-            </div>
+                bottom: '2%',
+                transform: 'translateX(-45%)'
+            }}>
+                <Form.Row>
+                    <Col md='auto'>
+                        <Button variant='light' disabled={buttonDisabled} onClick={gameHit}>Hit</Button>
+                    </Col>
+                    <Col md='auto'>
+                        <Button variant='light' disabled={buttonDisabled} onClick={gameStand}>Stand</Button>
+                    </Col>
+                    <Col md={7}>
+                        <InputGroup>
+                            <InputGroup.Prepend>
+                                <InputGroup.Text>$</InputGroup.Text>
+                            </InputGroup.Prepend>
+                            <FormControl id="betSize" placeholder="Bet" />
+                            <InputGroup.Append>
+                                <Button variant="primary" onClick={startGame} disabled={!buttonDisabled}>Start Game</Button>
+                            </InputGroup.Append>
+                        </InputGroup>
+                    </Col>
+                </Form.Row>
+            </Form>
+            <ToastContainer />
         </div>
     );
 }
 
-function Footer() {
-  return (
-    <div style={{
-        position: 'absolute',
-        width: '100vw',
-        top: '100%'
-    }}>
-        <hr />
-        <div style={{
-          paddingTop: '30px',
-          paddingBottom: '45px',
-          paddingLeft: '110px',
-          paddingRight: '30px',
-          display: 'block'
-        }}>
-          <Link to='/app'>
-            <EthLogo width='50' height='50' />
-          </Link>
-          <span style={{float: 'right'}}>
-            <SocialIcon network='medium' bgColor='white' fgColor='black'></SocialIcon>
-            <SocialIcon network='email' bgColor='white' fgColor='black'></SocialIcon>
-            <SocialIcon network='github' bgColor='white' fgColor='black'></SocialIcon>
-          </span>
-          
-        </div>
-    </div>
-  );
-}
-
 function Blackjack() {
+    document.body.style.backgroundColor = "#184587";
     return (
         <div>
             <Nav />
             <BlackjackTable />
-            <Footer />
         </div>
     ) ;
 }

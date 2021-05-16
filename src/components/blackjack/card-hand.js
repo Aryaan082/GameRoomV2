@@ -47,7 +47,6 @@ class CardHand {
     }
 
     addCardToHand() {
-        console.log(cardsUsed);
         let value = this.getRandomCardValue(cardValues);
         let suit = this.getRandomCardSuit(cardSuits);
         let card = value + suit;
