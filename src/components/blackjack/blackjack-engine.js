@@ -1,33 +1,16 @@
 import * as React from 'react';
-import {Col, Row, Image} from 'react-bootstrap';
+import {Col, Row} from 'react-bootstrap';
 import {CardHand} from './card-hand';
-import userWin from '../images/YouWinBanner.png';
-import dealerWin from '../images/DealerWinsBanner.png';
-import push from '../images/PushBanner.png';
 import 'playing-card';
-import '../style.css'
 
 let user;
 let dealer;
 
-function newGame() {
+function newGame(account) {
     user = new CardHand("User");
     dealer = new CardHand("Dealer");
 
     startGame();
-    return user.cardsInHand;
-    
-    // if (account != undefined) {
-    //     if (Number(web3.utils.fromWei(userBalance, "ether")) + userTab - Number(betSize.value) >= 0) {
-    //         usersRef.doc(account).update({
-    //             tab: userTab - betSize.value
-    //         });
-    //         startGame();
-    //     }
-    // } else {
-    //     startGame();
-    // }
-    
 }
 
 function startGame() {
@@ -70,7 +53,6 @@ function RenderCards({stand}) {
         for (var i = 0; i < user.cardsInHand.length; i++) {
             offsetUser = Math.pow(1.77, -i + 6.3) + 9.3;
         }
-        console.log(offsetUser)
 
         for (var ii = 0; ii < user.cardsInHand.length; ii++) {
             var iii = ii * offsetUser;
@@ -85,7 +67,7 @@ function RenderCards({stand}) {
                         fontSize: '30px',
                         position: 'absolute',
                         left: '15%',
-                        top: '18%'
+                        top: '25%'
                     }}>
                         <b>Dealer </b>
                         <div className='points'>
@@ -105,7 +87,7 @@ function RenderCards({stand}) {
                         position: 'absolute',
                         left: '50%',
                         transform: 'translateX(-25%)',
-                        top: '15%',
+                        top: '20%',
                     }}>
                         <Row>
                             {dealerCards}
@@ -119,7 +101,7 @@ function RenderCards({stand}) {
                         fontSize: '30px',
                         position: 'absolute',
                         left: '18%',
-                        bottom: '18%'
+                        bottom: '25%'
                     }}>
                         <b>You </b>
                         <div className='points'>
@@ -139,7 +121,7 @@ function RenderCards({stand}) {
                         position: 'absolute',
                         left: '50%',
                         transform: 'translateX(-25%)',
-                        bottom: '15%'
+                        bottom: '20%'
                     }}>
                         <Row>
                             {userCards}
@@ -149,9 +131,7 @@ function RenderCards({stand}) {
             </div>  
         );
     } else {
-        return (
-            <div></div>
-        );
+        return null;
     }
 }
 

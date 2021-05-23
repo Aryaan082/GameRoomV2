@@ -2,7 +2,7 @@ import * as React from 'react';
 import {Navbar, Button, Jumbotron, Container, Card, Row, Col} from 'react-bootstrap';
 import {Link} from 'react-router-dom';
 import {SocialIcon} from 'react-social-icons';
-import {HomeLogo} from '../components/home-logo';
+import homeLogo from '../components/home-logo.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Nav() {
@@ -10,17 +10,19 @@ function Nav() {
     <div style={{boxShadow: "0px 15px 15px #FAFAFA"}}>
       <Navbar style={{
         width: '800px', 
-        margin: '0 auto'}} expand='true' bg="white" variant="light">
+        margin: '0 auto'
+      }} expand='true' bg="white" variant="light">
         <Navbar.Brand href='.'>
-          <HomeLogo width="40" height="40" /> 
+          <img src={homeLogo} alt='Logo' width="40" height="40" /> 
           &nbsp;
           <h1 style={{
             fontSize: '25px',
+            fontWeight: 'bold',
             display: 'flex',
             paddingLeft: '50px',
             marginTop: '-35px'
           }}>
-            <b>OpenGames</b>
+            OpenGames
           </h1>
         </Navbar.Brand>
         <Link to='/blackjack'>
@@ -40,20 +42,21 @@ function Panel1TitleDescription() {
         padding: '200px 0px'
       }}>
         <h1 style={{
-          background: 'linear-gradient(135deg, #8ac2ff, #0057D9)', 
+          background: 'linear-gradient(135deg, #833196, #0057D9, #184587)', 
           WebkitBackgroundClip: 'text', 
           WebkitTextFillColor: 'transparent', 
           textAlign: 'center', 
-          fontSize: '50px'
+          fontSize: '55px',
+          fontWeight: 'bold'
         }}>
-          <b>Creating A Decentralized Casino</b>
+          A Trustless Casino
         </h1>
         <p style={{
           textAlign: 'center',
           fontSize: '20px'
         }}>
           <br/>
-          OpenGames is a transparent and secure application that allows anybody to earn cryptocurrency through secure caisno games.
+          The decentralized casino run on the ethereum blockchain to guarantee security and fairness with Blackjack.
         </p>  
       </div>
     </div>
@@ -67,7 +70,7 @@ function Panel2UserInfo() {
         <div>
           <div style={{
             padding: '40px 0px',
-            background: 'linear-gradient(135deg, #e9ecef, #0057D9)',
+            background: 'linear-gradient(135deg, #833196, #0057D9, #184587)',
             borderRadius: '10px',
             width: '800px', 
             height: '100px', 
@@ -75,10 +78,11 @@ function Panel2UserInfo() {
           }}>
             <h3 style={{
               fontSize: '20px',
+              fontWeight: 'bold',
               textAlign: 'center',
               color: 'white'
             }}>
-              <b>Current max bet size is $1</b>
+              Current max bet size is $1
             </h3>
           </div>
         </div>
@@ -95,9 +99,10 @@ function Panel2UserInfo() {
             <Container expand='true'>
               <h1 style={{
                 textAlign: 'center',
+                fontWeight: 'bold',
                 fontSize: '30px'
               }}>
-                <b>Staking</b>
+                Staking
               </h1>
               <p style={{
                 width: '650px',
@@ -130,17 +135,21 @@ function Panel3Instruction() {
           display: 'inline-block', 
           padding: '0px 165px'
         }}>
-          <h3 style={{fontSize: '36px'}}>
-            <b>It's</b>
+          <h3 style={{
+            fontSize: '36px',
+            fontWeight: 'bold'
+          }}>
+            It's
           </h3>
           <h3 style={{
-            background: 'linear-gradient(135deg, #e9ecef, #0057D9)', 
+            background: 'linear-gradient(135deg, #833196, #0057D9, #184587)', 
             WebkitBackgroundClip: 'text', 
             WebkitTextFillColor: 'transparent', 
             textAlign: 'center', 
-            fontSize: '50px'
+            fontSize: '50px',
+            fontWeight: 'bold'
           }}>
-            <b>Simple!</b>
+            Simple!
           </h3>
         </div>
         <div style={{paddingTop: '49px'}}>
@@ -217,14 +226,14 @@ function Footer() {
           display: 'block'
         }}>
           <a href='.'>
-            <HomeLogo width='50' height='50' />
+            <img src={homeLogo} alt='Logo' width='50' height='50' />
           </a>
           <span style={{float: 'right'}}>
             <a href='https://aryaan.medium.com/bitgames-1-roadmap-f447d2b6993' target='_blank'>
               <SocialIcon network='medium' bgColor='white' fgColor='black'></SocialIcon>
             </a>
             <a href='https://github.com/Aryaan962/GameRoomV2' target='_blank'>
-              <SocialIcon network='github' bgColor='white' fgColor='black' target='_blank' ></SocialIcon>
+              <SocialIcon network='github' bgColor='white' fgColor='black'></SocialIcon>
             </a> 
           </span>
           

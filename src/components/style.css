@@ -2,6 +2,26 @@ playing-card {
     --card-size: 2rem;
 }
 
+input {
+	border-radius: 3px;
+	border: 1px solid #f1f1f4;
+	background: #f1f2f7;
+}
+
+.start-button {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: white;
+	transition: 0.5s;
+}
+
+.start-button:hover {
+	cursor: pointer;
+	color: #e390f5;
+}
+
 .points {
     width: 60px;
     height: 60px;
@@ -12,26 +32,51 @@ playing-card {
     margin-top: -5px;
     transform: translateY(1%);
     display: inline-block;
-    animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
+.gray-pulse:enabled {
+    animation: pulse-gray 2s infinite;
+}
+
+@keyframes pulse-gray {
 	0% {
-		transform: scale(0.95);
-		box-shadow: 0 0 0 0 #ffffff;
+		transform: scale(1);
+		box-shadow: 0 0 0 0 #dae0e5;
 	}
 
 	70% {
 		transform: scale(1);
-		box-shadow: 0 0 0 10px #184587;
+		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
 	}
 
 	100% {
-		transform: scale(0.95);
-		box-shadow: 0 0 0 0 #184587;
+		transform: scale(1);
+		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+	}
+}
+
+.blue-pulse:enabled {
+    animation: pulse-blue 2s infinite;
+}
+
+@keyframes pulse-blue {
+	0% {
+		transform: scale(1);
+		box-shadow: 0 0 0 0 #007bff;
+	}
+
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+	}
+
+	100% {
+		transform: scale(1);
+		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 	}
 }
 
 body {
     width: 100vw;
 }
+
