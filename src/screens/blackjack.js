@@ -3,11 +3,14 @@ import * as Web3 from 'web3';
 import * as CoinGecko from 'coingecko-api';
 import {Navbar, Button, Form, Col, InputGroup, FormControl, Modal, Tabs, Tab, Overlay, Popover} from 'react-bootstrap';
 import {ToastContainer, toast} from 'react-toastify';
+import PuffLoader from 'react-spinners/PuffLoader';
+import {SocialIcon} from 'react-social-icons';
 import {loadContract, createUser, getBalance, getExistance, depositBalance, withdrawBalance, getLiquidity} from '../components/connect-smart-contracts';
 import {RenderCards, newGame, hit, stand, winnerMessage} from '../components/blackjack/blackjack-engine';
 import {db} from '../firebase';
 import ethLogo from '../components/eth-app-logo.png';
 import ethIcon from '../components/eth.png';
+import bugIcon from '../components/bug.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
 import '../components/style.css';
@@ -37,7 +40,7 @@ function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit,
         } else {
             setPopover('Not enough liquidity.');
             setTarget(event.target);
-            setTimeout(() => setPopover(undefined), 2000);
+            setTimeout(() => setPopover(undefined), 3000);
             console.log('Unable to carry out transaction. Not enough liquidity.');
             setAmount(Number(liquidity).toFixed(4));
         }
@@ -47,7 +50,7 @@ function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit,
         <Modal.Body>
             <p>Wallet Balance: <b>{Number(walletBalance)} ETH</b></p>
             <p>OpenGames Balance: <b>{Number(siteBalance)} ETH</b></p>
-            <p>Current Tab: <b>{Number(tab)} ETH</b></p>
+            <p>Current Tab: <b>{Math.abs(Number(tab))} ETH</b></p>
             <p>Current Liquidity: <b>{Number(liquidity)} ETH</b></p>
             <Form onSubmit={onSubmit}>
                 <InputGroup>
@@ -92,7 +95,7 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
         if (regExp.test(depositAmount)) {
             setPopover('Input error! Try again with an available value.');
             setTarget(event.target);
-            setTimeout(() => setPopover(undefined), 2000);
+            setTimeout(() => setPopover(undefined), 3000);
             console.log('Input is not an available value.');
         } else {
             setPopover(undefined);
@@ -108,18 +111,25 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
         if (regExp.test(withdrawAmount)) {
             setPopover('Input error! Try again with an available value.');
             setTarget(event.target);
-            setTimeout(() => setPopover(undefined), 2000);
+            setTimeout(() => setPopover(undefined), 3000);
             console.log('Input is not an available value.');
         } else {
-            setPopover(undefined);
-            withdrawBalance(address, withdrawAmount, String(tab))
-            .then(() => {
-                tabPlaceholder = (Number(withdrawAmount) > Number(tab) ? 0 : Number(tab) - Number(withdrawAmount));
-                setTab(tabPlaceholder.toFixed(4));
-                db.collection('users').doc(address).update({
-                    tab: tabPlaceholder.toFixed(4)
+            if (Number(withdrawAmount) > Number(tab) + Number(siteBalance)) {
+                setPopover('You can\'t withdraw more than you own.');
+                setTarget(event.target);
+                setTimeout(() => setPopover(undefined), 3000);
+            } else {
+                setPopover(undefined);
+                withdrawBalance(address, withdrawAmount, String(tab))
+                .then(() => {
+                    tabPlaceholder = (Number(withdrawAmount) > Number(tab) ? 0 : Number(tab) - Number(withdrawAmount));
+                    setTab(tabPlaceholder.toFixed(4));
+                    db.collection('users').doc(address).update({
+                        tab: tabPlaceholder.toFixed(4)
+                    });
                 });
-            });
+            }
+            
         }
     }
 
@@ -145,6 +155,29 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
     );
 }
 
+function BugReportModal({show, onHide, onClick}) {
+    return (
+        <Modal show={show} onHide={onHide} size='md' centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Report Bug</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>
+                    If you would like to report a bug, join our Discord server to share your thoughts and help develop OpenGames! Thanks.
+                </p>
+                <a style={{paddingLeft: '10px'}} href='https://discord.gg/58bHRuCc7n' target='_blank'>
+                    <SocialIcon network='discord'></SocialIcon>
+                </a> 
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={onClick}>
+                    Close
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}
+
 function Main() {
     const [siteBalanceEth, setSiteBalanceEth] = React.useState(0);
     const [siteBalanceUsd, setSiteBalanceUsd] = React.useState(0);
@@ -152,14 +185,19 @@ function Main() {
     const [tab, setTab] = React.useState(0);
     const [account, setAccount] = React.useState('');
     const [isLoading, setLoading] = React.useState(false);
-    const [depositDisplay, setDepositDisplay] = React.useState(false);
+    const [walletModal, setWalletModal] = React.useState(false);
     const [connected, setConnected] = React.useState(false);
     const [liquidity, setLiquidity] = React.useState(null);
-    const [exists, setExists] = React.useState(false);
+    const [exists, setExists] = React.useState(true);
     const [isLoadingUser, setLoadingUser] = React.useState(false);
+    const [bugModal, setBugModal] = React.useState(false);
+    const [mounted, setMounted] = React.useState(false);
 
-    const handleClose = () => setDepositDisplay(false);
-    const handleShow = () => setDepositDisplay(true);
+    const handleCloseBugModal = () => setBugModal(false);
+    const handleShowBugModal = () => setBugModal(true);
+
+    const handleCloseWalletModal = () => setWalletModal(false);
+    const handleShowWalletModal = () => setWalletModal(true);
     
     var address;
     var balance = 0;
@@ -172,6 +210,13 @@ function Main() {
     updateVariables();
     updateInterval();
     loadContract();
+
+    React.useEffect(() => {
+        setMounted(false);
+        setTimeout(() => {
+            setMounted(true);
+        }, 3000)
+    }, []);
     
     async function updateInterval() {
         update = setInterval(async () => {
@@ -184,7 +229,7 @@ function Main() {
                 setConnected(true);
                 updateVariables();
             }
-        }, 2000);
+        }, 3000);
     }
     
     async function updateVariables() {
@@ -201,7 +246,7 @@ function Main() {
                 existance = accountExists;
                 setExists(existance);
             }).catch(() => {
-                return;
+                console.log('hi');
             });
             getBalance(address).then(smartContractBalance => {
                 balance = Number(Web3.utils.fromWei(smartContractBalance, "ether")).toFixed(4);
@@ -232,8 +277,6 @@ function Main() {
             window.web3.eth.getBalance(address).then(addressBalance => {
                 balance = Number(Web3.utils.fromWei(addressBalance, "ether")).toFixed(4);
                 setWalletBalance(balance);
-            }).catch(() => {
-                return;
             });
         })
         .catch(() => {
@@ -264,15 +307,12 @@ function Main() {
             try {
                 // Request account access if needed
                 await window.ethereum.enable();
+                setConnected(true);
             } catch (error) {
                 // User denied account access...
+                setLoading(false);
                 return error;
             }
-            setConnected(true);
-        }
-        // Legacy dapp browsers...
-        else if (window.web3) {
-            window.web3 = new Web3(this.web3.currentProvider);
         }
     }
 
@@ -286,74 +326,110 @@ function Main() {
             });
         })
         .catch(() => {
+            setLoadingUser(false);
             setExists(false);
-            return;
         });
     }
 
     return (
         <div>
-            <Navbar style={{
-                backgroundColor: '#002c6b', 
-                width: '100%',
-                paddingLeft: '10px',
-                paddingRight: '10px'
-            }} expand='true' variant="dark">
-                <Navbar.Brand href='.'>
-                    <img src={ethLogo} alt='Logo' width='40' height='40'></img>
-                    &nbsp;
-                    <h1 style={{
-                        fontSize: '25px',
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        paddingLeft: '50px',
-                        marginTop: '-35px'
-                    }}>
-                        OpenGames
-                    </h1>
-                </Navbar.Brand>
-                {connected ? (
-                    exists ? (
-                        <div>
-                            <div style={{
-                                backgroundColor: '#082857',
-                                borderRadius: '5px',
-                                padding: '7px 8px',
-                                fontSize: '16px',
-                                color: '#ffffff',
-                                display: 'inline-block',
-                            }}>
-                                <img style={{marginTop: '-2px'}} src={ethIcon} alt='Eth:' width='25px' height='25px' />
-                                &nbsp;
-                                {console.log(siteBalanceUsd)}
-                                {console.log(Number(tab)*ethPrice)}
-                                {`$${(Number(siteBalanceUsd) + Number(tab)*ethPrice).toFixed(4)}`}
-                            </div>
-                            <Button variant='success' onClick={handleShow}>
-                                Deposit
-                            </Button>
-                        </div>
-                    ) : (
-                        null
-                    )
-                ) : (
-                    null
-                )}
-                
-                <div>
-                    {connected ? (
-                        exists ? (
-                            <div style={{color: '#ffffff', fontSize: '18px'}}>{account ? 'Logged In: ' + account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41) : null}</div>
-                        ) : (
-                            <Button variant="primary" onClick={createAccountUser} disabled={isLoadingUser}>{isLoadingUser ? 'Loading...' : 'Create User'}</Button>
-                        )
-                    ) : (
-                        <Button variant="primary" onClick={loadWallet} disabled={isLoading}>{isLoading ? 'Loading...' : 'Connect Wallet'}</Button>
-                    )}
+            {!mounted ? (
+                <div style={{
+                    textAlign: 'center',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    height: '100vh'
+                }}>
+                    <PuffLoader color={'#ffffff'} loading={!mounted} size={80} />
                 </div>
-            </Navbar>
-            <BlackjackGame address={account} tab={tab} setTab={setTab} siteBalance={siteBalanceEth} />
-            <WalletModal address={account} liquidity={liquidity} show={depositDisplay} onHide={handleClose} walletBalance={walletBalance} siteBalance={siteBalanceEth} setSiteBalance={setSiteBalanceEth} tab={tab} setTab={setTab} onClick={handleClose} />
+            ) : (
+                <>
+                    <Navbar style={{
+                        backgroundColor: '#002c6b', 
+                        width: '100%',
+                        paddingLeft: '10px',
+                        paddingRight: '10px'
+                    }} expand='true' variant="dark">
+                        <Navbar.Brand href='.'>
+                            <img src={ethLogo} alt='Logo' width='40' height='40'></img>
+                            &nbsp;
+                            <h1 style={{
+                                fontSize: '25px',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                paddingLeft: '50px',
+                                marginTop: '-35px'
+                            }}>
+                                OpenGames
+                            </h1>
+                        </Navbar.Brand>
+                        {connected ? (
+                            exists ? (
+                                <div>
+                                    <div style={{
+                                        backgroundColor: '#082857',
+                                        borderRadius: '5px',
+                                        padding: '7px 8px',
+                                        fontSize: '16px',
+                                        color: '#ffffff',
+                                        display: 'inline-block',
+                                    }}>
+                                        <img style={{marginTop: '-2px'}} src={ethIcon} alt='Eth:' width='25px' height='25px' />
+                                        &nbsp;
+                                        {`$${(Number(siteBalanceUsd) + Number(tab)*ethPrice).toFixed(4)}`}
+                                    </div>
+                                    <Button variant='success' onClick={handleShowWalletModal}>
+                                        Wallet
+                                    </Button>
+                                </div>
+                            ) : (
+                                null
+                            )
+                        ) : (
+                            null
+                        )}
+
+                        <div>
+                            {connected ? (
+                                exists ? (
+                                    <div style={{
+                                        color: '#ffffff', 
+                                        fontSize: '18px'
+                                    }}>
+                                        {account ? 'Logged In: ' + account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41) : null}
+                                    </div>
+                                ) : (
+                                    <Button className='red-pulse' variant="danger" onClick={createAccountUser} disabled={isLoadingUser}>{isLoadingUser ? 'Loading...' : 'Create User'}</Button>
+                                )
+                            ) : (
+                                <Button variant="primary" onClick={loadWallet} disabled={isLoading}>{isLoading ? 'Loading...' : 'Connect Wallet'}</Button>
+                            )}
+                        </div>
+                    </Navbar>
+                    <Button style={{
+                        width: '40px', 
+                        height: '40px',
+                        position: 'absolute',
+                        left: '100%',
+                        top: '100%',
+                        transform: 'translate(-100%, -100%)'
+                    }} variant='light' onClick={handleShowBugModal}>
+                        <img style={{
+                            height: '30px',
+                            width: '30px',
+                            position: 'absolute',
+                            left: '50%',
+                            top: '50%',
+                            transform: 'translate(-50%, -50%)'
+                        }} src={bugIcon} alt='bug'></img>
+                    </Button>
+                    <BlackjackGame address={account} tab={tab} setTab={setTab} siteBalance={siteBalanceEth} />
+                    <BugReportModal show={bugModal} onHide={handleCloseBugModal} onClick={handleCloseBugModal} />
+                    <WalletModal address={account} liquidity={liquidity} show={walletModal} onHide={handleCloseWalletModal} walletBalance={walletBalance} siteBalance={siteBalanceEth} setSiteBalance={setSiteBalanceEth} tab={tab} setTab={setTab} onClick={handleCloseWalletModal} />
+                </>
+            )}
         </div>
     );
 }
@@ -387,7 +463,7 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
         }
         if (regExp.test(betAmount)) {
             setPopover('Input error! Try again with an available value.');
-            setTimeout(() => setPopover(undefined), 2000);
+            setTimeout(() => setPopover(undefined), 3000);
             setTarget(event.target);
             console.log('Input is not an available value.');
         } else {
@@ -401,7 +477,7 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                 newGame();
             } else {
                 setPopover('Unable to bet. Deposit more to play.');
-                setTimeout(() => setPopover(undefined), 2000);
+                setTimeout(() => setPopover(undefined), 3000);
                 setTarget(event.target);
             }
         }

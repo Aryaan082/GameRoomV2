@@ -44,7 +44,7 @@ function RenderCards({stand}) {
             }
         } else {
             dealerCards.push(<Col><playing-card style={{display: 'inline-block'}} rank={dealer.cardsInHand[0].charAt(0) === '1' ? 10 : dealer.cardsInHand[0].charAt(0)} suit={dealer.cardsInHand[0].charAt(dealer.cardsInHand[0].length - 1)}></playing-card></Col>);
-            dealerCards.push(<Col style={{position: 'relative', right: '29.918559090014792%'}}><div style={{background: 'linear-gradient(135deg, #e66465, #9198e5)', width: '5rem', height: ' 7rem', borderRadius: '4px', display: 'inline-block'}}></div></Col>)
+            dealerCards.push(<Col style={{position: 'relative', right: '29.918559090014792%'}}><div style={{background: 'linear-gradient(135deg, #e66465, #9198e5)', width: '100px', height: '140px', borderRadius: '4px', display: 'inline-block'}}></div></Col>)
         }
 
         var userCards = [];
@@ -67,7 +67,7 @@ function RenderCards({stand}) {
                         fontSize: '30px',
                         position: 'absolute',
                         left: '15%',
-                        top: '25%'
+                        top: '23%'
                     }}>
                         <b>Dealer </b>
                         <div className='points'>
@@ -87,7 +87,7 @@ function RenderCards({stand}) {
                         position: 'absolute',
                         left: '50%',
                         transform: 'translateX(-25%)',
-                        top: '20%',
+                        top: '18%',
                     }}>
                         <Row>
                             {dealerCards}
@@ -101,7 +101,7 @@ function RenderCards({stand}) {
                         fontSize: '30px',
                         position: 'absolute',
                         left: '18%',
-                        bottom: '25%'
+                        bottom: '23%'
                     }}>
                         <b>You </b>
                         <div className='points'>
@@ -121,7 +121,7 @@ function RenderCards({stand}) {
                         position: 'absolute',
                         left: '50%',
                         transform: 'translateX(-25%)',
-                        bottom: '20%'
+                        bottom: '18%'
                     }}>
                         <Row>
                             {userCards}

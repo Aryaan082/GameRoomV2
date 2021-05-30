@@ -122,7 +122,7 @@ async function loadContract() {
             "type": "function"
         }
     ];
-	gameRoomContractAddress = "0x772c08838F88Ae36e48328fD74DaC6C49AfA4895";
+	gameRoomContractAddress = "0xBc26FA2db540d71cb759E0b723Bab67F90064D30";
 	window.contract = await new window.web3.eth.Contract(gameRoomContractABI, gameRoomContractAddress);
 }
 
@@ -134,7 +134,7 @@ async function getBalance(address) {
     try {
         return await window.contract.methods.getBalance().call({ from: address });
     } catch (error) {
-        console.log("An error occured.");
+        return error;
     }
 }
 

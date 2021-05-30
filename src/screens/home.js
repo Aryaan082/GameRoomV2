@@ -82,7 +82,8 @@ function Panel2UserInfo() {
               textAlign: 'center',
               color: 'white'
             }}>
-              Current max bet size is $1
+              {/* Current max bet size is ? */}
+              Available on Ropsten test network!
             </h3>
           </div>
         </div>
@@ -170,8 +171,8 @@ function Panel3Instruction() {
                     Connect</b>
                   </Card.Title>
                   <Card.Text style={{padding: '10px 0px'}}>
-                    Click the Connect Wallet button to connect your browser wallet. Ex. Metamask<br /> <br />
-                    Once your wallet is connected, click the Create User button and accept the blockchain transaction.
+                    Click the CONNECT WALLET button in the top right to connect a browser wallet. Ex. Metamask<br /> <br />
+                    Once your wallet is connected, click the CREATE USER button in the top right and accept the transaction.
                   </Card.Text>
                 </Card.Body>
               </Card>
@@ -186,8 +187,8 @@ function Panel3Instruction() {
                     Deposit</b>
                   </Card.Title>
                   <Card.Text style={{padding: '10px 0px'}}>
-                    Once connected, you will be able to track your balance and check which wallet you are connected to.<br /> <br />
-                    Click the deposit button and enter the amount you would like to deposit.               
+                    Once connected, manage your balance and find important information by clicking the WALLET button at the top.<br /> <br />
+                    To deposit funds, just choose the option and accept the transaction from your browser wallet.               
                   </Card.Text>
                 </Card.Body>
               </Card>
@@ -202,8 +203,8 @@ function Panel3Instruction() {
                     Play</b>
                   </Card.Title>
                   <Card.Text style={{padding: '10px 0px'}}>
-                    After you accept the transaction and wait for your deposit, your balance will update. To withdraw, click that button and accept the transaction.<br /> <br />
-                    Choose a game, bet, and have fun!
+                    Once your transaction is accepted and the action is fulfilled, your balance will be updated as soon as possible.<br /> <br />
+                    Nothing else to worry about. Just enter your bet, start up a game of blackjack, and have fun!
                   </Card.Text>
                 </Card.Body>
               </Card>
@@ -229,11 +230,14 @@ function Footer() {
             <img src={homeLogo} alt='Logo' width='50' height='50' />
           </a>
           <span style={{float: 'right'}}>
-            <a href='https://aryaan.medium.com/bitgames-1-roadmap-f447d2b6993' target='_blank'>
-              <SocialIcon network='medium' bgColor='white' fgColor='black'></SocialIcon>
+            <a style={{paddingLeft: '10px'}} href='https://aryaan.medium.com/bitgames-1-roadmap-f447d2b6993' target='_blank'>
+              <SocialIcon network='medium'></SocialIcon>
             </a>
-            <a href='https://github.com/Aryaan962/GameRoomV2' target='_blank'>
-              <SocialIcon network='github' bgColor='white' fgColor='black'></SocialIcon>
+            <a style={{paddingLeft: '10px'}} href='https://twitter.com/OpenGames8' target='_blank'>
+              <SocialIcon network='twitter'></SocialIcon>
+            </a> 
+            <a style={{paddingLeft: '10px'}} href='https://discord.gg/58bHRuCc7n' target='_blank'>
+                <SocialIcon network='discord'></SocialIcon>
             </a> 
           </span>
           
