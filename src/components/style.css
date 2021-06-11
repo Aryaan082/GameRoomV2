@@ -22,6 +22,16 @@ input {
 	color: #e390f5;
 }
 
+.modal-button {
+	background-color: #3686ff;
+	border-radius: 30px;
+	font-size: 16px;
+	width: 150px;
+	position: relative;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
 .points {
     width: 60px;
     height: 60px;
@@ -99,5 +109,56 @@ input {
 
 body {
     width: 100vw;
+	height: 100vh;
+	width: 100%;
+	height: 100%;
 }
 
+.nav-buttons {
+	color: black;
+	font-size: 18px;
+	font-weight: 300;
+}
+
+.nav-button-main {
+	background-color: #e6eafc;
+	color: #0057D9;
+	padding: 13px 40px;
+	border-radius: 5px;
+	font-weight: 500;
+}
+
+.nav-buttons:hover {
+	color: black;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.navbar {
+	padding: 10px 50px;
+	width: 100%;
+	background: transparent;
+}
+
+.navbar.active {
+	background: #ffffff;
+	box-shadow: 0 3px 1rem rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+	padding: 10px 15px;
+	border-radius: 10px;
+	color: #707070;
+}
+
+.dropdown-item:hover {
+	color: black;
+}
+
+.x-close {
+	transform: translate(-150%, -10%);
+}
+
+/* .x-close:hover {
+	background-color: white;
+} */

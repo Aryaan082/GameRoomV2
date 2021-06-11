@@ -122,7 +122,7 @@ async function loadContract() {
             "type": "function"
         }
     ];
-	gameRoomContractAddress = "0xBc26FA2db540d71cb759E0b723Bab67F90064D30";
+	gameRoomContractAddress = "0x623119b21a3faEf8E28Bf19d3A40A02A53CF74Aa";
 	window.contract = await new window.web3.eth.Contract(gameRoomContractABI, gameRoomContractAddress);
 }
 
@@ -143,7 +143,7 @@ async function getExistance(address) {
 }
 
 async function depositBalance(address, depositAmount) {
-	window.contract.methods.depositBalance().send({ from: address, value: Web3.utils.toWei(depositAmount, "ether") });
+	await window.contract.methods.depositBalance().send({ from: address, value: Web3.utils.toWei(depositAmount, "ether") });
 }
 
 async function withdrawBalance(address, withdrawAmount, tab) {

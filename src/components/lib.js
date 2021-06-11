@@ -1,10 +1,12 @@
 import styled from '@emotion/styled';
-import 'playing-card'
+import {Modal} from 'react-bootstrap';
 
-const PlayingCard = styled.(playing-card)({
-    
+
+const SpModal = styled(Modal)({
+    width: '450px',
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -40%)'
 });
 
-
-
-export {Flashy};
+export {SpModal};

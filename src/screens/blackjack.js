@@ -1,16 +1,20 @@
 import * as React from 'react';
 import * as Web3 from 'web3';
 import * as CoinGecko from 'coingecko-api';
-import {Navbar, Button, Form, Col, InputGroup, FormControl, Modal, Tabs, Tab, Overlay, Popover} from 'react-bootstrap';
+import {Navbar, Button, Form, Col, InputGroup, FormControl, Modal, Tabs, Tab, Overlay, Tooltip, Popover, Dropdown, Spinner} from 'react-bootstrap';
 import {ToastContainer, toast} from 'react-toastify';
 import PuffLoader from 'react-spinners/PuffLoader';
 import {SocialIcon} from 'react-social-icons';
 import {loadContract, createUser, getBalance, getExistance, depositBalance, withdrawBalance, getLiquidity} from '../components/connect-smart-contracts';
 import {RenderCards, newGame, hit, stand, winnerMessage} from '../components/blackjack/blackjack-engine';
 import {db} from '../firebase';
-import ethLogo from '../components/eth-app-logo.png';
-import ethIcon from '../components/eth.png';
-import bugIcon from '../components/bug.png';
+import ethLogo from '../components/eth-logo.svg';
+import ethIcon from '../components/eth-icon.svg';
+import bugIcon from '../components/bug-icon.svg';
+import walletIcon from '../components/wallet-icon.svg';
+import discordIcon from '../components/discord-icon.svg';
+import docsIcon from '../components/docs-icon.svg';
+import testnetInstructions from '../components/testnet-instructions.gif';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
 import '../components/style.css';
@@ -29,10 +33,19 @@ getEthPrice();
 
 function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit, popover, setPopover, target, setTarget}) {
     const [amount, setAmount] = React.useState('');
+    const [tabInfo, setTabInfo] = React.useState(false);
+    const [liquidityInfo, setLiquidityInfo] = React.useState(false);
 
-    function handleChange(event) {
-        setAmount(event.target.value);
-    }
+    const tabInfoTarget = React.useRef(null);
+    const liquidityInfoTarget = React.useRef(null);
+
+    const handleChange = (event) => setAmount(event.target.value);
+
+    const handleTabMouseOver = () => setTabInfo('This is your running total. To settle your tab, just withdraw.');
+    const handleTabMouseLeave = () => setTabInfo(false);
+
+    const handleLiquidityMouseOver = () => setLiquidityInfo('This is the total amount available to win. Liquidity determines maximum available payout.');
+    const handleLiquidityMouseLeave = () => setLiquidityInfo(false);
 
     function maxWithdraw(event) {
         if (Number(siteBalance) + Number(tab) <= Number(liquidity)) {
@@ -50,8 +63,35 @@ function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit,
         <Modal.Body>
             <p>Wallet Balance: <b>{Number(walletBalance)} ETH</b></p>
             <p>OpenGames Balance: <b>{Number(siteBalance)} ETH</b></p>
-            <p>Current Tab: <b>{Math.abs(Number(tab))} ETH</b></p>
-            <p>Current Liquidity: <b>{Number(liquidity)} ETH</b></p>
+            <p style={{textAlign: 'left'}}>Your Tab: <b>{Number(tab)} ETH</b>
+                <span style={{
+                    float: 'right',
+                    fontSize: '20px',
+                    fontWeight: '800'
+                }} ref={tabInfoTarget} onMouseOver={handleTabMouseOver} onMouseLeave={handleTabMouseLeave}>
+                    ?
+                </span>
+                <Overlay target={tabInfoTarget.current} show={Boolean(tabInfo)} placement="left">
+                    <Tooltip>
+                        {tabInfo}
+                    </Tooltip>
+                </Overlay>
+            </p>
+            <p style={{textAlign: 'left'}}>Current Liquidity: <b>{Number(liquidity)} ETH</b>
+                <span style={{
+                    float: 'right',
+                    fontSize: '20px',
+                    fontWeight: '800'
+                }} ref={liquidityInfoTarget} onMouseOver={handleLiquidityMouseOver} onMouseLeave={handleLiquidityMouseLeave}>
+                    ?
+                </span>
+                <Overlay target={liquidityInfoTarget.current} show={Boolean(liquidityInfo)} placement="left">
+                    <Tooltip>
+                        {liquidityInfo}
+                    </Tooltip>
+                </Overlay>
+            </p>
+            
             <Form onSubmit={onSubmit}>
                 <InputGroup>
                     <FormControl style={{
@@ -71,7 +111,7 @@ function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit,
                 </InputGroup>
                 <div style={{paddingTop: '15px'}}>
                     <Button variant='primary' type="submit" block>{type}</Button>
-                    <Overlay show={Boolean(popover)} target={target} placement="top">
+                    <Overlay show={Boolean(popover)} target={target} placement="bottom">
                         <Popover id="popover-contained">
                             <Popover.Content>
                                 {popover}
@@ -84,7 +124,7 @@ function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit,
     );
 }
 
-function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, liquidity, setTab, onClick}) {
+function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, liquidity, setTab, setDisplaySpinner}) {
     const [popover, setPopover] = React.useState(false);
     const [target, setTarget] = React.useState(null);
 
@@ -92,14 +132,22 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
         event.preventDefault();
         var regExp = /[a-zA-Z]/g;
         var depositAmount = event.target.elements[0].value;
-        if (regExp.test(depositAmount)) {
+        if (regExp.test(depositAmount) || depositAmount === '') {
             setPopover('Input error! Try again with an available value.');
             setTarget(event.target);
             setTimeout(() => setPopover(undefined), 3000);
             console.log('Input is not an available value.');
         } else {
             setPopover(undefined);
-            depositBalance(address, depositAmount);
+            setDisplaySpinner(true);
+            depositBalance(address, depositAmount)
+            .then(() => {
+                setDisplaySpinner(false);
+            })
+            .catch(() => {
+                setDisplaySpinner(false);
+            });
+            onHide();
         }
     }
 
@@ -108,7 +156,7 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
         var regExp = /[a-zA-Z]/g;
         var withdrawAmount = event.target.elements[0].value;
         var tabPlaceholder;
-        if (regExp.test(withdrawAmount)) {
+        if (regExp.test(withdrawAmount) || withdrawAmount === '') {
             setPopover('Input error! Try again with an available value.');
             setTarget(event.target);
             setTimeout(() => setPopover(undefined), 3000);
@@ -120,24 +168,39 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
                 setTimeout(() => setPopover(undefined), 3000);
             } else {
                 setPopover(undefined);
+                setDisplaySpinner(true);
                 withdrawBalance(address, withdrawAmount, String(tab))
                 .then(() => {
                     tabPlaceholder = (Number(withdrawAmount) > Number(tab) ? 0 : Number(tab) - Number(withdrawAmount));
                     setTab(tabPlaceholder.toFixed(4));
+                    setDisplaySpinner(false);
                     db.collection('users').doc(address).update({
                         tab: tabPlaceholder.toFixed(4)
                     });
+                })
+                .catch(() => {
+                    setDisplaySpinner(false);
                 });
+                onHide();
             }
             
         }
     }
 
     return (
-        <Modal show={show} onHide={onHide} size='md' centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Wallet Functions</Modal.Title>
-            </Modal.Header>
+        <Modal show={show} size='md' centered>
+            <h1 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                paddingTop: '20px',
+                paddingLeft: '20px'
+            }}>
+                Wallet
+                <button className='close x-close' onClick={onHide}>
+                    <span>&times;</span>
+                </button>
+            </h1>
+            
             <Tabs style={{paddingTop: '10px', paddingLeft: '10px'}} defaultActiveKey="deposit">
                 <Tab eventKey="deposit" title="Deposit">
                     <WalletForm type='Deposit' walletBalance={walletBalance} siteBalance={siteBalance} tab={tab} liquidity={liquidity} setTab={setTab} popover={popover} setPopover={setPopover} target={target} setTarget={setTarget} onSubmit={handleSubmitDeposit} />
@@ -146,34 +209,98 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
                     <WalletForm type='Withdraw' walletBalance={walletBalance} siteBalance={siteBalance} tab={tab} liquidity={liquidity} setTab={setTab} popover={popover} setPopover={setPopover} target={target} setTarget={setTarget} onSubmit={handleSubmitWithdraw} />
                 </Tab>
             </Tabs>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onClick}>
-                    Close
-                </Button>
-            </Modal.Footer>
         </Modal>
     );
 }
 
 function BugReportModal({show, onHide, onClick}) {
     return (
-        <Modal show={show} onHide={onHide} size='md' centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Report Bug</Modal.Title>
-            </Modal.Header>
+        <Modal show={show} size='md' centered>
+            <h1 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                paddingTop: '20px',
+                paddingLeft: '20px'
+            }}>
+                Report Bug + Feature Request
+                <button className='close x-close' onClick={onHide}>
+                    <span>&times;</span>
+                </button>
+            </h1>
             <Modal.Body>
-                <p>
-                    If you would like to report a bug, join our Discord server to share your thoughts and help develop OpenGames! Thanks.
+                <p style={{padding: '0px 5px'}}>
+                    If you would like to report a bug, request a feature, or be more involved, join the Discord server or Follow our twitter to share your thoughts!
                 </p>
-                <a style={{paddingLeft: '10px'}} href='https://discord.gg/58bHRuCc7n' target='_blank'>
-                    <SocialIcon network='discord'></SocialIcon>
-                </a> 
+                <div style={{
+                    padding: '4% 0px',
+                    display: 'flex',
+                    justifyContent: 'center'
+                }}>
+                    <a style={{paddingRight: '20px'}} href='https://twitter.com/OpenGamesCasino' rel="noreferrer" target='_blank'>
+                        <SocialIcon network='twitter' fgColor='white'></SocialIcon>
+                    </a> 
+                    <a href='https://discord.gg/58bHRuCc7n' rel="noreferrer" target='_blank'>
+                        <SocialIcon network='discord' fgColor='white'></SocialIcon>
+                    </a>
+                </div>
             </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onClick}>
-                    Close
-                </Button>
-            </Modal.Footer>
+        </Modal>
+    );
+}
+
+function BrowserWalletInstructionsModal({show, onHide}) {
+    return (
+        <Modal show={show} size='md' backdrop='static' keyboard={false} centered>
+            <div style={{
+                padding: '30px 20px'
+            }}>
+                <h1 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#3686ff',
+                    textAlign: 'center'
+                }}>
+                    No Browser Wallet Available
+                </h1>
+                <p style={{
+                    fontSize: '16px',
+                    fontWeight: '400',
+                    color: '#707070',
+                    textAlign: 'center'
+                }}>
+                    Download a browser wallet like <a style={{color: '#3686ff'}} href='https://metamask.io/download.html' rel="noreferrer" target='_blank'>Metamask</a> to Connect to OpenGames or continue and play for Free!
+                </p>
+                <Button className='modal-button' onClick={onHide}>Got it!</Button>
+            </div>
+        </Modal>
+    );
+}
+
+function ChainAlertInstructionModal({show, onHide}) {
+    return (
+        <Modal show={show} size='md' backdrop='static' keyboard={false} centered>
+            <div style={{
+                padding: '30px 20px'
+            }}>
+                <h1 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#3686ff',
+                    textAlign: 'center'
+                }}>
+                    Unavailable Chain Selected
+                </h1>
+                <p style={{
+                    fontSize: '16px',
+                    fontWeight: '400',
+                    color: '#707070',
+                    textAlign: 'center'
+                }}>
+                    Select the Ropsten Test Network to continue using OpenGames or continue for free! 
+                </p>
+                <img style={{display: 'block', margin: '0 auto', paddingBottom: '20px'}} width='150px' src={testnetInstructions} alt='testnet instructions' />
+                <Button className='modal-button' onClick={onHide}>Done!</Button>
+            </div>
         </Modal>
     );
 }
@@ -188,16 +315,26 @@ function Main() {
     const [walletModal, setWalletModal] = React.useState(false);
     const [connected, setConnected] = React.useState(false);
     const [liquidity, setLiquidity] = React.useState(null);
-    const [exists, setExists] = React.useState(true);
+    const [exists, setExists] = React.useState(false);
     const [isLoadingUser, setLoadingUser] = React.useState(false);
     const [bugModal, setBugModal] = React.useState(false);
     const [mounted, setMounted] = React.useState(false);
+    const [browserWalletAvailable, setBrowserWalletAvailable] = React.useState(false);
+    const [chainID, setChainID] = React.useState('');
+    const [chainAlert, setChainAlert] = React.useState(false);
+    const [displaySpinner, setDisplaySpinner] = React.useState(false);
 
     const handleCloseBugModal = () => setBugModal(false);
     const handleShowBugModal = () => setBugModal(true);
 
     const handleCloseWalletModal = () => setWalletModal(false);
     const handleShowWalletModal = () => setWalletModal(true);
+
+    const handleCloseBrowserWalletInstructionsModal = () => setBrowserWalletAvailable(false);
+    const handleShowBrowserWalletInstructionsModal = () => setBrowserWalletAvailable(true);
+
+    const handleCloseChainAlert = () => setChainAlert(false);
+    const handleShowChainAlert = () => setChainAlert(true);
     
     var address;
     var balance = 0;
@@ -206,6 +343,7 @@ function Main() {
     var userTab;
     var existance;
     window.web3 = new Web3(window.ethereum);
+
     getTab();
     updateVariables();
     updateInterval();
@@ -236,6 +374,7 @@ function Main() {
         window.web3.eth.getAccounts().then(addresses => {
             address = addresses[0];
             setAccount(address);
+            setChainID(window.web3._provider.chainId);
             window.web3.eth.getBalance(address).then(personalBalance => {
                 balance = Number(Web3.utils.fromWei(personalBalance, "ether")).toFixed(4);
                 setWalletBalance(balance);
@@ -246,7 +385,8 @@ function Main() {
                 existance = accountExists;
                 setExists(existance);
             }).catch(() => {
-                console.log('hi');
+                setExists();
+                console.log('User does not exist');
             });
             getBalance(address).then(smartContractBalance => {
                 balance = Number(Web3.utils.fromWei(smartContractBalance, "ether")).toFixed(4);
@@ -254,6 +394,8 @@ function Main() {
                 balance = Number(Web3.utils.fromWei(smartContractBalance, "ether") * ethPrice).toFixed(4)
                 setSiteBalanceUsd(balance);
             }).catch(() => {
+                setSiteBalanceEth();
+                setSiteBalanceUsd();
                 return;
             });
             getLiquidity(address).then(pool => {
@@ -269,7 +411,15 @@ function Main() {
     }
     
     async function loadWallet() {
+        setBrowserWalletAvailable(!Boolean(window.web3.givenProvider));
         setLoading(true);
+
+        if (!Boolean(window.web3.givenProvider)) {
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000);
+        }
+
         await loadWeb3();
         window.web3.eth.getAccounts().then(addresses => {
             address = addresses[0];
@@ -306,7 +456,7 @@ function Main() {
         if (window.ethereum) {
             try {
                 // Request account access if needed
-                await window.ethereum.enable();
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
                 setConnected(true);
             } catch (error) {
                 // User denied account access...
@@ -317,18 +467,31 @@ function Main() {
     }
 
     function createAccountUser() {
-        setLoadingUser(true);
-        createUser(account)
-        .then(() => {
-            setExists(true);
-            db.collection('users').doc(account).set({
-                tab: 0
+        setChainID(window.web3._provider.chainId);
+        if (window.web3._provider.chainId !== '0x3') {
+            handleShowChainAlert();
+        } else {
+            setLoadingUser(true);
+            createUser(account)
+            .then(() => {
+                setExists(true);
+                db.collection('users').doc(account).set({
+                    tab: 0
+                });
+            })
+            .catch(() => {
+                setLoadingUser(false);
+                setExists(false);
             });
-        })
-        .catch(() => {
-            setLoadingUser(false);
-            setExists(false);
-        });
+        }
+    }
+
+    function getNetwork() {
+        if (chainID === '0x1') {
+            return 'Mainnet';
+        } else if (chainID === '0x3') {
+            return 'Ropsten Testnet';
+        }
     }
 
     return (
@@ -394,12 +557,47 @@ function Main() {
                         <div>
                             {connected ? (
                                 exists ? (
-                                    <div style={{
-                                        color: '#ffffff', 
-                                        fontSize: '18px'
-                                    }}>
-                                        {account ? 'Logged In: ' + account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41) : null}
-                                    </div>
+                                    <>
+                                        {displaySpinner ? (
+                                            <div style={{
+                                                position: 'absolute',
+                                                transform: 'translate(-100%, 10%)'
+                                            }}>
+                                                <Spinner variant='white' animation='border'></Spinner>
+                                            </div>
+                                        ) : (
+                                            null
+                                        )}
+                                        <Dropdown>
+                                            <Dropdown.Toggle style={{
+                                                color: 'white',
+                                                fontSize: '18px'
+                                            }} variant='white'>
+                                                {account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41)}
+                                            </Dropdown.Toggle>
+
+                                            <Dropdown.Menu style={{
+                                                padding: '0px 0px',
+                                                borderRadius: '10px'
+                                            }}>
+                                                <Dropdown.Item className='dropdown-item' onClick={handleShowWalletModal}>
+                                                    <img width='20px' src={walletIcon} alt='' /> &nbsp;
+                                                    Wallet
+                                                </Dropdown.Item>
+                                                <Dropdown.Item className='dropdown-item' href='https://discord.gg/58bHRuCc7n' rel="noreferrer" target='_blank'>
+                                                    <img width='20px' src={discordIcon} alt='' /> &nbsp;
+                                                    Discord
+                                                </Dropdown.Item>
+                                                <Dropdown.Item className='dropdown-item' href='https://github.com/Aryaan962/GameRoomV2' rel="noreferrer" target='_blank'>
+                                                    <img width='20px' src={docsIcon} alt='' /> &nbsp;
+                                                    Docs
+                                                </Dropdown.Item>
+                                                <Dropdown.Item style={{textAlign: 'center', color: 'black'}} className='dropdown-item' disabled>
+                                                    {getNetwork()}
+                                                </Dropdown.Item>
+                                            </Dropdown.Menu>
+                                        </Dropdown>
+                                    </>
                                 ) : (
                                     <Button className='red-pulse' variant="danger" onClick={createAccountUser} disabled={isLoadingUser}>{isLoadingUser ? 'Loading...' : 'Create User'}</Button>
                                 )
@@ -426,8 +624,10 @@ function Main() {
                         }} src={bugIcon} alt='bug'></img>
                     </Button>
                     <BlackjackGame address={account} tab={tab} setTab={setTab} siteBalance={siteBalanceEth} />
-                    <BugReportModal show={bugModal} onHide={handleCloseBugModal} onClick={handleCloseBugModal} />
-                    <WalletModal address={account} liquidity={liquidity} show={walletModal} onHide={handleCloseWalletModal} walletBalance={walletBalance} siteBalance={siteBalanceEth} setSiteBalance={setSiteBalanceEth} tab={tab} setTab={setTab} onClick={handleCloseWalletModal} />
+                    <BugReportModal show={bugModal} onHide={handleCloseBugModal}/>
+                    <WalletModal address={account} liquidity={liquidity} show={walletModal} onHide={handleCloseWalletModal} walletBalance={walletBalance} siteBalance={siteBalanceEth} setSiteBalance={setSiteBalanceEth} tab={tab} setTab={setTab} setDisplaySpinner={setDisplaySpinner} />
+                    <BrowserWalletInstructionsModal show={browserWalletAvailable} onHide={handleCloseBrowserWalletInstructionsModal} />
+                    <ChainAlertInstructionModal show={chainAlert} onHide={handleCloseChainAlert} />
                 </>
             )}
         </div>
@@ -435,27 +635,45 @@ function Main() {
 }
 
 function BlackjackGame({address, tab, setTab, siteBalance}) {
-    const [buttonDisabled, setButtonDisabled] = React.useState(true);
+    const [gameStarted, setGameStarted] = React.useState(false);
     const [standStatus, setStandStatus] = React.useState(false);
     const [initialize, setInitialize] = React.useState(true);
     const [popover, setPopover] = React.useState(false);
-    const [target, setTarget] = React.useState(null);
     const [state, setState] = React.useState();
     const [bet, setBet] = React.useState(0);
+
+    const target = React.useRef(null);
 
     var betAmount;
 
     const handleInitialize = () => {
         setInitialize(false);
         startGame(0);
-    };
+    }
+
+    // not in proper scope. can only read value of gameStarted where event listener is called
+    // const logKey = (e) => {
+    //     console.log(gameStarted);
+    //     console.log(e.key.toUpperCase());
+    //     if (e.key.toUpperCase() === 'Q') {
+    //         gameHit();
+    //     } else if (e.key.toUpperCase() === 'W') {
+    //         gameStand();
+    //     } else if (e.key.toUpperCase() === 'E') {
+    //         startGame(bet);
+    //     }
+    // }
 
     function startGame(event) {
+        if (gameStarted) {
+            return;
+        }
         setPopover(undefined);
         var regExp = /[a-zA-Z]/g;
         
         if (event === 0) {
             betAmount = 0;
+            setBet(0);
         } else {
             event.preventDefault();
             betAmount = event.target[2].value;
@@ -464,26 +682,37 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
         if (regExp.test(betAmount)) {
             setPopover('Input error! Try again with an available value.');
             setTimeout(() => setPopover(undefined), 3000);
-            setTarget(event.target);
             console.log('Input is not an available value.');
         } else {
-            if (Number(siteBalance) + Number(tab) - Number(betAmount)/ethPrice >= 0) {
-                setButtonDisabled(false);
+            if (Number(betAmount) === 0) {
+                setGameStarted(true);
+                setStandStatus(false);
+                newGame();
+                setState({});                
+            } else if (Number(siteBalance) + Number(tab) - Number(betAmount)/ethPrice >= 0 && address) {
+                setGameStarted(true);
                 setStandStatus(false);
                 setTab((Number(tab) - (Number(betAmount)/ethPrice)).toFixed(4));
                 db.collection('users').doc(address).update({
                     tab: (Number(tab) - (Number(betAmount)/ethPrice)).toFixed(4)
+                }).then(() => {
+                    newGame();
+                    setState({}); 
+                })
+                .catch(() => {
+                    console.log('Error betting.');
                 });
-                newGame();
             } else {
                 setPopover('Unable to bet. Deposit more to play.');
                 setTimeout(() => setPopover(undefined), 3000);
-                setTarget(event.target);
             }
         }
     }
 
     function gameHit() {
+        if (!gameStarted) {
+            return;
+        }
         var alive = hit();
         setState({});
         if (!alive) {
@@ -492,6 +721,9 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
     }
 
     function gameStand() {
+        if (!gameStarted) {
+            return;
+        }
         setStandStatus(true);
         stand();
         setState({});
@@ -499,13 +731,15 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
     }
     
     function endGame() {
-        setButtonDisabled(true);
+        setGameStarted(false);
         if (winnerMessage() === 'You Won!') {
-            setTab((Number(tab) + (Number(bet)/ethPrice*2)).toFixed(4));
-            db.collection('users').doc(address).update({
-                tab: (Number(tab) + (Number(bet)/ethPrice*2)).toFixed(4)
-            });
-            toast.success(`${winnerMessage()} ${(Number(bet)/ethPrice).toFixed(4)} ETH`, {
+            if (address) {
+                setTab((Number(tab) + (Number(bet)/ethPrice*2)).toFixed(4));
+                db.collection('users').doc(address).update({
+                    tab: (Number(tab) + (Number(bet)/ethPrice*2)).toFixed(4)
+                });
+            }
+            toast.success(`${winnerMessage()} $${Number(bet).toFixed(4)}`, {
                 position: "top-right",
                 autoClose: 4000,
                 hideProgressBar: false,
@@ -514,7 +748,7 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                 draggable: true,
             });
         } else if (winnerMessage() === 'You Lost.') {
-            toast.error(`${winnerMessage()} ${(Number(bet)/ethPrice).toFixed(4)} ETH`, {
+            toast.error(`${winnerMessage()} $${Number(bet).toFixed(4)}`, {
                 position: "top-right",
                 autoClose: 4000,
                 hideProgressBar: false,
@@ -523,10 +757,12 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                 draggable: true,
             });
         } else {
-            setTab((Number(tab) + (Number(bet)/ethPrice)).toFixed(4));
-            db.collection('users').doc(address).update({
-                tab: (Number(tab) + (Number(bet)/ethPrice)).toFixed(4)
-            });
+            if (address) {
+                setTab((Number(tab) + (Number(bet)/ethPrice)).toFixed(4));
+                db.collection('users').doc(address).update({
+                    tab: (Number(tab) + (Number(bet)/ethPrice)).toFixed(4)
+                });
+            }
             toast.dark(winnerMessage(), {
                 position: "top-right",
                 autoClose: 4000,
@@ -544,12 +780,12 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
             {initialize ? (
                 <div className='start-button' onClick={handleInitialize}>
                     <h1 style={{
-                        fontWeight: 'bold',
+                        fontWeight: '400',
                         fontSize: '110px',
                         display: 'inline',
                         paddingRight: '10px'
                     }}>
-                        START &gt;
+                        Start &gt;
                     </h1>
                 </div>
             ) : (
@@ -561,10 +797,10 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                 }} onSubmit={startGame}>
                     <Form.Row>
                         <Col md='auto'>
-                            <Button className='gray-pulse' variant='light' disabled={buttonDisabled} onClick={gameHit} active>Hit</Button>
+                            <Button className='gray-pulse' variant='light' disabled={!gameStarted} onClick={gameHit} active>Hit</Button>
                         </Col>
                         <Col md='auto'>
-                            <Button className='gray-pulse' variant='light' disabled={buttonDisabled} onClick={gameStand} active>Stand</Button>
+                            <Button className='gray-pulse' variant='light' disabled={!gameStarted} onClick={gameStand} active>Stand</Button>
                         </Col>
                         <Col md={7}>
                             <InputGroup style={{border: '0'}}>
@@ -573,9 +809,9 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                                 </InputGroup.Prepend>
                                 <FormControl style={{border: '1px solid #f1f1f4', background: '#f1f1f4'}} id="betSize" placeholder="Bet" />
                                 <InputGroup.Append>
-                                    <Button className='blue-pulse' type="submit" disabled={!buttonDisabled}>Start Game</Button>
-                                    <Overlay show={Boolean(popover)} target={target} placement="top">
-                                        <Popover id="popover-contained">
+                                    <Button className='blue-pulse' ref={target} type="submit" disabled={gameStarted}>Start Game</Button>
+                                    <Overlay show={Boolean(popover)} target={target.current} placement="top">
+                                        <Popover>
                                             <Popover.Content>
                                                 {popover}
                                             </Popover.Content>
@@ -598,7 +834,7 @@ function Blackjack() {
         <div>
             <Main />
         </div>
-    ) ;
+    );
 }
 
 export default Blackjack;
