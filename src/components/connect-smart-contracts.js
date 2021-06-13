@@ -6,38 +6,6 @@ let gameRoomContractAddress;
 async function loadContract() {
 	gameRoomContractABI = [
         {
-            "anonymous": false,
-            "inputs": [
-                {
-                    "indexed": true,
-                    "internalType": "address",
-                    "name": "oldOwner",
-                    "type": "address"
-                },
-                {
-                    "indexed": true,
-                    "internalType": "address",
-                    "name": "newOwner",
-                    "type": "address"
-                }
-            ],
-            "name": "OwnerSet",
-            "type": "event"
-        },
-        {
-            "inputs": [],
-            "name": "balance",
-            "outputs": [
-                {
-                    "internalType": "int256",
-                    "name": "",
-                    "type": "int256"
-                }
-            ],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
             "inputs": [
                 {
                     "internalType": "address",
@@ -62,6 +30,69 @@ async function loadContract() {
             "name": "depositBalance",
             "outputs": [],
             "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "oldOwner",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "newOwner",
+                    "type": "address"
+                }
+            ],
+            "name": "OwnerSet",
+            "type": "event"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_amount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "int256",
+                    "name": "_tab",
+                    "type": "int256"
+                }
+            ],
+            "name": "withdrawBalance",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_amount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "withdrawContract",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "balance",
+            "outputs": [
+                {
+                    "internalType": "int256",
+                    "name": "",
+                    "type": "int256"
+                }
+            ],
+            "stateMutability": "view",
             "type": "function"
         },
         {
@@ -102,27 +133,9 @@ async function loadContract() {
             ],
             "stateMutability": "view",
             "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "_amount",
-                    "type": "uint256"
-                },
-                {
-                    "internalType": "int256",
-                    "name": "_tab",
-                    "type": "int256"
-                }
-            ],
-            "name": "withdrawBalance",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function"
         }
     ];
-	gameRoomContractAddress = "0x623119b21a3faEf8E28Bf19d3A40A02A53CF74Aa";
+	gameRoomContractAddress = "0xd84b545dea8A2d56dFF2208f4D932d92CbCD9Ec2";
 	window.contract = await new window.web3.eth.Contract(gameRoomContractABI, gameRoomContractAddress);
 }
 

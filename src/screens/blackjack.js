@@ -7,13 +7,14 @@ import PuffLoader from 'react-spinners/PuffLoader';
 import {SocialIcon} from 'react-social-icons';
 import {loadContract, createUser, getBalance, getExistance, depositBalance, withdrawBalance, getLiquidity} from '../components/connect-smart-contracts';
 import {RenderCards, newGame, hit, stand, winnerMessage} from '../components/blackjack/blackjack-engine';
-import {db} from '../firebase';
+import {db} from '../.firebase';
 import ethLogo from '../components/eth-logo.svg';
 import ethIcon from '../components/eth-icon.svg';
 import bugIcon from '../components/bug-icon.svg';
 import walletIcon from '../components/wallet-icon.svg';
 import discordIcon from '../components/discord-icon.svg';
 import docsIcon from '../components/docs-icon.svg';
+import transactionCompleteIcon from '../components/transaction-complete-icon.svg';
 import testnetInstructions from '../components/testnet-instructions.gif';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -22,14 +23,13 @@ import '../components/style.css';
 const CoinGeckoClient = new CoinGecko();
 let ethPrice;
 
-async function getEthPrice() {
+async function updateEthPrice() {
     await CoinGeckoClient.simple.price({ids: 'ethereum'}).then(async (eth) => {
         ethPrice = Number(eth.data.ethereum.usd);
-        return ethPrice;
     });
 }
 
-getEthPrice();
+updateEthPrice();
 
 function WalletForm({type, walletBalance, siteBalance, tab, liquidity, onSubmit, popover, setPopover, target, setTarget}) {
     const [amount, setAmount] = React.useState('');
@@ -140,11 +140,9 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
         } else {
             setPopover(undefined);
             setDisplaySpinner(true);
-            depositBalance(address, depositAmount)
-            .then(() => {
+            depositBalance(address, depositAmount).then(() => {
                 setDisplaySpinner(false);
-            })
-            .catch(() => {
+            }).catch(() => {
                 setDisplaySpinner(false);
             });
             onHide();
@@ -169,16 +167,14 @@ function WalletModal({address, show, onHide, walletBalance, siteBalance, tab, li
             } else {
                 setPopover(undefined);
                 setDisplaySpinner(true);
-                withdrawBalance(address, withdrawAmount, String(tab))
-                .then(() => {
+                withdrawBalance(address, withdrawAmount, String(tab)).then(() => {
                     tabPlaceholder = (Number(withdrawAmount) > Number(tab) ? 0 : Number(tab) - Number(withdrawAmount));
                     setTab(tabPlaceholder.toFixed(4));
                     setDisplaySpinner(false);
                     db.collection('users').doc(address).update({
                         tab: tabPlaceholder.toFixed(4)
                     });
-                })
-                .catch(() => {
+                }).catch(() => {
                     setDisplaySpinner(false);
                 });
                 onHide();
@@ -314,7 +310,7 @@ function Main() {
     const [isLoading, setLoading] = React.useState(false);
     const [walletModal, setWalletModal] = React.useState(false);
     const [connected, setConnected] = React.useState(false);
-    const [liquidity, setLiquidity] = React.useState(null);
+    const [liquidity, setLiquidity] = React.useState(0);
     const [exists, setExists] = React.useState(false);
     const [isLoadingUser, setLoadingUser] = React.useState(false);
     const [bugModal, setBugModal] = React.useState(false);
@@ -373,40 +369,50 @@ function Main() {
     async function updateVariables() {
         window.web3.eth.getAccounts().then(addresses => {
             address = addresses[0];
-            setAccount(address);
-            setChainID(window.web3._provider.chainId);
-            window.web3.eth.getBalance(address).then(personalBalance => {
-                balance = Number(Web3.utils.fromWei(personalBalance, "ether")).toFixed(4);
-                setWalletBalance(balance);
-            }).catch(() => {
-                return;
-            });
-            getExistance(address).then(accountExists => {
-                existance = accountExists;
-                setExists(existance);
-            }).catch(() => {
-                setExists();
-                console.log('User does not exist');
-            });
-            getBalance(address).then(smartContractBalance => {
-                balance = Number(Web3.utils.fromWei(smartContractBalance, "ether")).toFixed(4);
-                setSiteBalanceEth(balance);
-                balance = Number(Web3.utils.fromWei(smartContractBalance, "ether") * ethPrice).toFixed(4)
-                setSiteBalanceUsd(balance);
-            }).catch(() => {
-                setSiteBalanceEth();
-                setSiteBalanceUsd();
-                return;
-            });
-            getLiquidity(address).then(pool => {
-                poolAmount = Number(Web3.utils.fromWei(pool, "ether")).toFixed(4);
-                setLiquidity(poolAmount);
-            }).catch(() => {
-                return;
-            });
+            if (address !== undefined) {
+                setAccount(address);
+                setChainID(window.web3._provider.chainId);
+                updateEthPrice();
+                window.web3.eth.getBalance(address).then(personalBalance => {
+                    balance = Number(Web3.utils.fromWei(personalBalance, "ether")).toFixed(4);
+                    setWalletBalance(balance);
+                }).catch(() => {
+                    return;
+                });
+                getExistance(address).then(accountExists => {
+                    existance = accountExists;
+                    setExists(existance);
+                }).catch(() => {
+                    setExists();
+                    console.log('User does not exist');
+                });
+                getBalance(address).then(smartContractBalance => {
+                    balance = Number(Web3.utils.fromWei(smartContractBalance, "ether")).toFixed(4);
+                    setSiteBalanceEth(balance);
+                    balance = Number(Web3.utils.fromWei(smartContractBalance, "ether") * ethPrice).toFixed(4)
+                    setSiteBalanceUsd(balance);
+                }).catch(() => {
+                    setSiteBalanceEth();
+                    setSiteBalanceUsd();
+                    return;
+                });
+                getLiquidity(address).then(pool => {
+                    poolAmount = Number(Web3.utils.fromWei(pool, "ether")).toFixed(4);
+                    setLiquidity(poolAmount);
+                }).catch(() => {
+                    return;
+                });
+            } else {
+                clearInterval(update);
+                setConnected(false);
+                setExists(false);
+                setLoading(false);
+            }
         }).catch(() => {
             clearInterval(update);
             setConnected(false);
+            setExists(false);
+            setLoading(false);
         });
     }
     
@@ -428,8 +434,7 @@ function Main() {
                 balance = Number(Web3.utils.fromWei(addressBalance, "ether")).toFixed(4);
                 setWalletBalance(balance);
             });
-        })
-        .catch(() => {
+        }).catch(() => {
             clearInterval(update);
             setConnected(false);
         });
@@ -472,14 +477,12 @@ function Main() {
             handleShowChainAlert();
         } else {
             setLoadingUser(true);
-            createUser(account)
-            .then(() => {
+            createUser(account).then(() => {
                 setExists(true);
                 db.collection('users').doc(account).set({
                     tab: 0
                 });
-            })
-            .catch(() => {
+            }).catch(() => {
                 setLoadingUser(false);
                 setExists(false);
             });
@@ -561,21 +564,26 @@ function Main() {
                                         {displaySpinner ? (
                                             <div style={{
                                                 position: 'absolute',
-                                                transform: 'translate(-100%, 10%)'
+                                                transform: 'translate(-100%, 15%)'
                                             }}>
                                                 <Spinner variant='white' animation='border'></Spinner>
                                             </div>
                                         ) : (
-                                            null
+                                            <div style={{
+                                                position: 'absolute',
+                                                transform: 'translate(-93%, 20%)'
+                                            }}>
+                                                <img width='30px' src={transactionCompleteIcon} alt='' />
+                                            </div>
                                         )}
                                         <Dropdown>
                                             <Dropdown.Toggle style={{
+                                                fontSize: '18px',
+                                                outline: 'none',
                                                 color: 'white',
-                                                fontSize: '18px'
-                                            }} variant='white'>
+                                            }} variant='transparent'>
                                                 {account.charAt(0) + account.charAt(1) + account.charAt(2) + account.charAt(3) + account.charAt(4) + account.charAt(5) + '...' + account.charAt(38) + account.charAt(39) + account.charAt(40) + account.charAt(41)}
                                             </Dropdown.Toggle>
-
                                             <Dropdown.Menu style={{
                                                 padding: '0px 0px',
                                                 borderRadius: '10px'
@@ -623,7 +631,7 @@ function Main() {
                             transform: 'translate(-50%, -50%)'
                         }} src={bugIcon} alt='bug'></img>
                     </Button>
-                    <BlackjackGame address={account} tab={tab} setTab={setTab} siteBalance={siteBalanceEth} />
+                    <BlackjackGame address={account} tab={tab} setTab={setTab} siteBalanceEth={siteBalanceEth} liquidity={liquidity} exists={exists} />
                     <BugReportModal show={bugModal} onHide={handleCloseBugModal}/>
                     <WalletModal address={account} liquidity={liquidity} show={walletModal} onHide={handleCloseWalletModal} walletBalance={walletBalance} siteBalance={siteBalanceEth} setSiteBalance={setSiteBalanceEth} tab={tab} setTab={setTab} setDisplaySpinner={setDisplaySpinner} />
                     <BrowserWalletInstructionsModal show={browserWalletAvailable} onHide={handleCloseBrowserWalletInstructionsModal} />
@@ -634,7 +642,7 @@ function Main() {
     );
 }
 
-function BlackjackGame({address, tab, setTab, siteBalance}) {
+function BlackjackGame({address, tab, setTab, siteBalanceEth, liquidity, exists}) {
     const [gameStarted, setGameStarted] = React.useState(false);
     const [standStatus, setStandStatus] = React.useState(false);
     const [initialize, setInitialize] = React.useState(true);
@@ -689,7 +697,7 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                 setStandStatus(false);
                 newGame();
                 setState({});                
-            } else if (Number(siteBalance) + Number(tab) - Number(betAmount)/ethPrice >= 0 && address) {
+            } else if (Number(siteBalanceEth) + Number(tab) - Number(betAmount)/ethPrice >= 0 && address && Number(betAmount) <= getMaxBet()) {
                 setGameStarted(true);
                 setStandStatus(false);
                 setTab((Number(tab) - (Number(betAmount)/ethPrice)).toFixed(4));
@@ -698,12 +706,11 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                 }).then(() => {
                     newGame();
                     setState({}); 
-                })
-                .catch(() => {
+                }).catch(() => {
                     console.log('Error betting.');
                 });
             } else {
-                setPopover('Unable to bet. Deposit more to play.');
+                setPopover('Unable to bet. Reduce bet or deposit more.');
                 setTimeout(() => setPopover(undefined), 3000);
             }
         }
@@ -741,7 +748,8 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
             }
             toast.success(`${winnerMessage()} $${Number(bet).toFixed(4)}`, {
                 position: "top-right",
-                autoClose: 4000,
+                pauseOnFocusLoss: false,
+                autoClose: 3000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: false,
@@ -750,7 +758,8 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
         } else if (winnerMessage() === 'You Lost.') {
             toast.error(`${winnerMessage()} $${Number(bet).toFixed(4)}`, {
                 position: "top-right",
-                autoClose: 4000,
+                pauseOnFocusLoss: false,
+                autoClose: 3000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: false,
@@ -765,7 +774,8 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
             }
             toast.dark(winnerMessage(), {
                 position: "top-right",
-                autoClose: 4000,
+                pauseOnFocusLoss: false,
+                autoClose: 3000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: false,
@@ -774,18 +784,22 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
         }
     }
 
+    function getMaxBet() {
+        return ((liquidity - Number(siteBalanceEth)) / 20 * ethPrice).toFixed(2);
+    }
+
     return (
-        <div>
+        <>
             <RenderCards stand={standStatus} />
             {initialize ? (
                 <div className='start-button' onClick={handleInitialize}>
                     <h1 style={{
-                        fontWeight: '400',
+                        fontWeight: '800',
                         fontSize: '110px',
                         display: 'inline',
                         paddingRight: '10px'
                     }}>
-                        Start &gt;
+                        START
                     </h1>
                 </div>
             ) : (
@@ -793,7 +807,8 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                     position: 'absolute',
                     left: '50%',
                     bottom: '2%',
-                    transform: 'translateX(-45%)'
+                    display: 'inline',
+                    transform: 'translateX(-50%)'
                 }} onSubmit={startGame}>
                     <Form.Row>
                         <Col md='auto'>
@@ -802,7 +817,7 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                         <Col md='auto'>
                             <Button className='gray-pulse' variant='light' disabled={!gameStarted} onClick={gameStand} active>Stand</Button>
                         </Col>
-                        <Col md={7}>
+                        <Col md={6}>
                             <InputGroup style={{border: '0'}}>
                                 <InputGroup.Prepend>
                                     <InputGroup.Text style={{border: '0'}}>$</InputGroup.Text>
@@ -820,20 +835,33 @@ function BlackjackGame({address, tab, setTab, siteBalance}) {
                                 </InputGroup.Append>
                             </InputGroup>
                         </Col>
+                        {exists ? (
+                            <div style={{
+                                display: 'inline',
+                                color: 'white',
+                                fontWeight: '800',
+                                fontSize: '18px',
+                                margin: 'auto auto'
+                            }}>
+                                Max Bet: ${getMaxBet()}
+                            </div>
+                        ) : (
+                            null
+                        )}
                     </Form.Row>
                 </Form>
             )}
             <ToastContainer />
-        </div>
+        </>
     );
 }
 
 function Blackjack() {
     document.body.style.backgroundColor = "#184587";
     return (
-        <div>
+        <>
             <Main />
-        </div>
+        </>
     );
 }
 

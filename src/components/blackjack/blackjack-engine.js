@@ -85,13 +85,15 @@ function RenderCards({stand}) {
                     </div>
                     <div style={{
                         position: 'absolute',
-                        left: '50%',
-                        transform: 'translateX(-25%)',
-                        top: '18%',
+                        left: '42.5%',
+                        top: '18%'
                     }}>
-                        <Row>
+                        <div style={{
+                            width: '100%',
+                            display: 'flex'
+                        }}>
                             {dealerCards}
-                        </Row>
+                        </div>
                     </div>
                 </div>
                 
@@ -119,13 +121,15 @@ function RenderCards({stand}) {
                     </div>
                     <div style={{
                         position: 'absolute',
-                        left: '50%',
-                        transform: 'translateX(-25%)',
+                        left: '42.5%',
                         bottom: '18%'
                     }}>
-                        <Row>
+                        <div style={{
+                            width: '100%',
+                            display: 'flex'
+                        }}>
                             {userCards}
-                        </Row>
+                        </div>
                     </div>
                 </div>
             </div>  

@@ -107,7 +107,7 @@ function TitlePage() {
         justifyContent: 'space-evenly',
         width: '100%',
         position: 'absolute',
-        bottom: '-4%',
+        top: '17.5%',
         zIndex: '-1'
       }}>
         <div style={{width: '20px', height: '60px', borderRadius: '50px', backgroundColor: '#d5c2e1', zIndex: '-1'}}></div>
